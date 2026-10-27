@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#29251f">
+<title>Votação Culinária</title>
+<style>
+:root{--bg:#f7f3eb;--paper:#fffdf8;--ink:#29251f;--muted:#766e63;--accent:#b8432e;--line:#e7dfd2;--gold:#d5a34b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Arial,Helvetica,sans-serif}
+header{background:var(--ink);color:#fffaf1;text-align:center;padding:34px 18px 30px;border-bottom:6px solid var(--accent)}
+.eyebrow{text-transform:uppercase;letter-spacing:.16em;color:#e8c98e;font-size:.75rem;font-weight:bold;margin:0 0 8px}
+h1{font:clamp(2rem,6vw,3.2rem)/1.1 Georgia,serif;margin:0}header p:last-child{color:#e9e0d2;max-width:650px;margin:12px auto 0}
+main{max-width:1000px;margin:26px auto 50px;padding:0 15px}
+.panel,.team-card{background:var(--paper);border:1px solid var(--line);border-radius:15px;margin-bottom:18px;overflow:hidden}
+.panel{padding:20px}.auth-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.muted{color:var(--muted);font-size:.92rem}.button{border:0;border-radius:9px;padding:11px 15px;background:var(--accent);color:white;font-weight:bold;cursor:pointer}
+.button.secondary{background:#eee5d8;color:var(--ink);border:1px solid #d8cfc1}.button:disabled{opacity:.45;cursor:not-allowed}
+#status{margin:12px 0 0;font-size:.94rem}#status.error{color:#a3281d}#status.ok{color:#25643b}
+.instructions{background:#f0e6d5;border-left:4px solid var(--gold);padding:13px 15px;border-radius:8px;margin-bottom:20px}
+.team-heading{padding:17px 20px;background:#fff8ed;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.team-heading h2{font:1.5rem Georgia,serif;margin:0}.team-label{display:block;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-size:.7rem;font-weight:bold}
+.criteria{padding:5px 20px 12px}.criterion{display:grid;grid-template-columns:minmax(150px,1fr) auto;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid #eee8df}.criterion:last-child{border:0}
+.criterion label{font-weight:bold}.criterion small{display:block;color:var(--muted);font-size:.82rem}
+.rating{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}.rating button{width:34px;height:37px;border:1px solid #d8cfc1;border-radius:7px;background:white;color:#51483e;font-weight:bold;cursor:pointer}.rating button.selected{background:var(--accent);color:white;border-color:var(--accent)}
+.team-total{background:var(--ink);color:white;border-radius:999px;padding:7px 11px;white-space:nowrap;font-weight:bold;font-size:.9rem}
+#submitArea{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.summary{background:var(--ink);color:#fffaf1;padding:22px;border-radius:15px;margin-top:26px}.summary h2{font:1.8rem Georgia,serif;margin:0 0 4px}.summary>p{color:#d9d0c3;margin-top:0}
+.results{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.result{background:#39332c;border:1px solid #51483e;border-radius:12px;padding:16px}.result .name{color:#e8c98e;font-weight:bold;font-size:.9rem}.big-score{font-size:2rem;font-weight:800;margin:4px 0 0;font-variant-numeric:tabular-nums}.out-of{font-size:.82rem;color:#d9d0c3}.result .votes{font-size:.84rem;color:#e9e0d2;margin-top:8px}.ranking{border-top:1px solid #51483e;margin-top:18px;padding-top:14px}.ranking h3{margin:0 0 8px;font-size:1rem}.ranking ol{padding-left:22px;margin:0}.footnote{text-align:center;color:var(--muted);font-size:.82rem;margin:22px 0}
+[hidden]{display:none!important}
+@media(max-width:650px){.criterion{grid-template-columns:1fr;gap:8px}.rating{justify-content:flex-start}.rating button{flex:1 0 27px;max-width:42px}.criteria{padding-left:15px;padding-right:15px}.results{grid-template-columns:1fr}.team-heading{align-items:flex-start;flex-direction:column}}
+@media print{.auth-row button,#submitArea{display:none}.summary{break-inside:avoid}}
+</style>
+</head>
+<body>
+<header>
+  <p class="eyebrow">Desafio gastronômico</p>
+  <h1>Votação Culinária</h1>
+  <p>Avalie os vídeos das equipes. Os votos são somados e a classificação é atualizada em tempo real.</p>
+</header>
+<main>
+  <section class="panel">
+    <div class="auth-row">
+      <div>
+        <strong id="authTitle">Entre para votar</strong>
+        <div class="muted" id="authDescription">Use sua conta Google. Cada conta pode enviar uma avaliação.</div>
+      </div>
+      <div>
+        <button class="button" id="loginBtn">Entrar com Google</button>
+        <button class="button secondary" id="logoutBtn" hidden>Sair</button>
+      </div>
+    </div>
+    <p id="status" role="status">Conectando ao sistema de votação…</p>
+  </section>
+
+  <div class="instructions">
+    <strong>Como funciona:</strong> dê uma nota de 1 a 10 para cada um dos sete critérios em cada equipe. Para enviar, é necessário preencher todas as 21 notas. Cada conta Google pode enviar um voto, e não será possível alterá-lo depois do envio.
+  </div>
+
+  <section id="votingForm" hidden>
+    <div id="teams"></div>
+    <div class="panel" id="submitArea">
+      <button class="button" id="submitBtn" disabled>Enviar minha avaliação</button>
+      <span class="muted" id="progress">0 de 21 notas preenchidas</span>
+    </div>
+  </section>
+
+  <section class="panel" id="alreadyVoted" hidden>
+    <strong>Seu voto já foi registrado.</strong>
+    <p class="muted">Para preservar a regra de um voto por conta, esta avaliação não pode ser alterada. Você ainda pode acompanhar a classificação abaixo.</p>
+  </section>
+
+  <section class="summary" aria-live="polite">
+    <h2>Resultado em tempo real</h2>
+    <p>Os pontos de todos os participantes são somados. A pontuação máxima por voto é de 70 pontos por equipe.</p>
+    <div class="results" id="results">
+      <div class="result">Carregando resultados…</div>
+    </div>
+    <div class="ranking" id="ranking"></div>
+    <p class="muted" id="voteCount" style="color:#d9d0c3;margin:15px 0 0">Carregando número de votos…</p>
+  </section>
+  <p class="footnote">Votação Culinária • Pão da Vida • Crônicas do Sabor • Gafanhotas</p>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+
+/*
+  PASSO OBRIGATÓRIO:
+  Substitua os valores abaixo pela configuração do seu app web no Firebase.
+  Firebase Console > Configurações do projeto > Seus apps > App da Web.
+*/
+const firebaseConfig = {
+  apiKey: "COLOQUE_SUA_API_KEY",
+  authDomain: "COLOQUE_SEU_PROJETO.firebaseapp.com",
+  projectId: "COLOQUE_SEU_PROJECT_ID",
+  appId: "COLOQUE_SEU_APP_ID"
+};
+
+const criteria = [
+  {id:"criatividade",name:"Criatividade",help:"Ideia, originalidade e soluções inesperadas."},
+  {id:"humor",name:"Humor",help:"Capacidade de divertir e entreter."},
+  {id:"execucao",name:"Execução do prato",help:"Preparo, técnica e resultado culinário."},
+  {id:"apresentacao",name:"Apresentação",help:"Visual do prato e qualidade do vídeo."},
+  {id:"caos",name:"Caos",help:"Imprevistos e momentos caóticos — quanto mais memorável, melhor."},
+  {id:"participacao",name:"Participação",help:"Envolvimento e contribuição dos integrantes."},
+  {id:"carisma",name:"Carisma",help:"Presença, simpatia e capacidade de conquistar o público."}
+];
+const teams = [
+  {id:"pao_da_vida",name:"Pão da Vida"},
+  {id:"cronicas_do_sabor",name:"Crônicas do Sabor"},
+  {id:"gafanhotas",name:"Gafanhotas"}
+];
+const scores = Object.fromEntries(teams.map(t=>[t.id,Object.fromEntries(criteria.map(c=>[c.id,0]))]));
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+const $ = id => document.getElementById(id);
+let currentUser = null;
+let submitted = false;
+let votesUnsubscribe = null;
+let appConfigured = !Object.values(firebaseConfig).some(v=>String(v).startsWith("COLOQUE_"));
+
+function setStatus(message,type="") {
+  $("status").textContent = message;
+  $("status").className = type;
+}
+function buildForm() {
+  $("teams").innerHTML = "";
+  teams.forEach((team,index)=>{
+    const card=document.createElement("article");
+    card.className="team-card";
+    card.innerHTML=`
+      <div class="team-heading">
+        <div><span class="team-label">Equipe ${index+1}</span><h2>${team.name}</h2></div>
+        <div class="team-total" id="personal-${team.id}">0 / 70 pontos</div>
+      </div>
+      <div class="criteria">${criteria.map(c=>`
+        <div class="criterion">
+          <div><label>${c.name}</label><small>${c.help}</small></div>
+          <div class="rating" role="group" aria-label="${c.name} — ${team.name}">
+            ${Array.from({length:10},(_,i)=>`<button type="button" data-team="${team.id}" data-criterion="${c.id}" data-score="${i+1}" aria-pressed="false">${i+1}</button>`).join("")}
+          </div>
+        </div>`).join("")}
+      </div>`;
+    $("teams").appendChild(card);
+  });
+}
+function updateForm() {
+  let count=0;
+  teams.forEach(team=>{
+    const total=Object.values(scores[team.id]).reduce((a,b)=>a+b,0);
+    $("personal-"+team.id).textContent=`${total} / 70 pontos`;
+    count+=Object.values(scores[team.id]).filter(v=>v>=1&&v<=10).length;
+  });
+  document.querySelectorAll(".rating button").forEach(btn=>{
+    const selected=scores[btn.dataset.team][btn.dataset.criterion]===Number(btn.dataset.score);
+    btn.classList.toggle("selected",selected);
+    btn.setAttribute("aria-pressed",String(selected));
+    btn.disabled=!currentUser||submitted;
+  });
+  $("progress").textContent=`${count} de 21 notas preenchidas`;
+  $("submitBtn").disabled=!currentUser||submitted||count!==21;
+}
+function renderResults(votes) {
+  const totals=Object.fromEntries(teams.map(t=>[t.id,0]));
+  votes.forEach(vote=>{
+    teams.forEach(team=>{
+      const teamScores=vote.ratings?.[team.id]||{};
+      criteria.forEach(c=>{
+        const n=teamScores[c.id];
+        if(Number.isInteger(n)&&n>=1&&n<=10) totals[team.id]+=n;
+      });
+    });
+  });
+  $("results").innerHTML=teams.map(team=>`
+    <div class="result">
+      <div class="name">${team.name}</div>
+      <div class="big-score">${totals[team.id]}</div>
+      <div class="out-of">pontos somados</div>
+      <div class="votes">${votes.length} ${votes.length===1?"voto recebido":"votos recebidos"}</div>
+    </div>`).join("");
+  const ranking=[...teams].sort((a,b)=>totals[b.id]-totals[a.id]);
+  $("ranking").innerHTML="<h3>Classificação atual</h3><ol>"+ranking.map((t,i)=>{
+    const tied=i>0&&totals[t.id]===totals[ranking[i-1].id];
+    return `<li>${t.name} — <strong>${totals[t.id]} pontos</strong>${tied?" (empate)":""}</li>`;
+  }).join("")+"</ol>";
+  $("voteCount").textContent=`Total de avaliações enviadas: ${votes.length}. Cada avaliação acrescenta até 70 pontos a cada equipe.`;
+}
+function showSignedIn(user) {
+  currentUser=user;
+  $("loginBtn").hidden=!!user;
+  $("logoutBtn").hidden=!user;
+  $("authTitle").textContent=user?`Conectado: ${user.displayName||user.email||"conta Google"}`:"Entre para votar";
+  $("authDescription").textContent=user?"Sua conta está conectada. Cada conta pode enviar uma avaliação.":"Use sua conta Google. Cada conta pode enviar uma avaliação.";
+}
+async function handleUser(user) {
+  showSignedIn(user);
+  if(!user) {
+    $("votingForm").hidden=true;
+    $("alreadyVoted").hidden=true;
+    updateForm();
+    return;
+  }
+  setStatus("Verificando se esta conta já votou…");
+  try {
+    const existing=await getDoc(doc(db,"votes",user.uid));
+    submitted=existing.exists();
+    $("alreadyVoted").hidden=!submitted;
+    $("votingForm").hidden=submitted;
+    setStatus(submitted?"Voto já registrado. A classificação continua sendo atualizada em tempo real.":"Escolha as notas para as três equipes e envie sua avaliação.","ok");
+    updateForm();
+  } catch(error) {
+    setStatus("Não foi possível verificar seu voto. Confira as regras do Firestore e tente recarregar a página. "+error.message,"error");
+  }
+}
+$("teams").addEventListener("click",event=>{
+  const btn=event.target.closest("button[data-score]");
+  if(!btn||!currentUser||submitted)return;
+  scores[btn.dataset.team][btn.dataset.criterion]=Number(btn.dataset.score);
+  updateForm();
+});
+$("loginBtn").addEventListener("click",async()=>{
+  try { await signInWithPopup(auth,provider); }
+  catch(error) { setStatus("Falha no login: "+error.message,"error"); }
+});
+$("logoutBtn").addEventListener("click",async()=>{
+  try { await signOut(auth); setStatus("Você saiu da conta."); }
+  catch(error) { setStatus("Não foi possível sair: "+error.message,"error"); }
+});
+$("submitBtn").addEventListener("click",async()=>{
+  if(!currentUser||submitted)return;
+  const ratings={};
+  for(const team of teams) {
+    ratings[team.id]={};
+    for(const c of criteria) {
+      const score=scores[team.id][c.id];
+      if(!Number.isInteger(score)||score<1||score>10) {
+        setStatus("Preencha todas as 21 notas antes de enviar.","error");
+        return;
+      }
+      ratings[team.id][c.id]=score;
+    }
+  }
+  $("submitBtn").disabled=true;
+  setStatus("Enviando seu voto…");
+  try {
+    await setDoc(doc(db,"votes",currentUser.uid),{
+      uid:currentUser.uid,
+      ratings,
+      submittedAt:serverTimestamp()
+    });
+    submitted=true;
+    $("votingForm").hidden=true;
+    $("alreadyVoted").hidden=false;
+    setStatus("Voto enviado. Obrigado por participar!","ok");
+  } catch(error) {
+    setStatus(error.code==="permission-denied"
+      ?"Este voto não foi aceito. Talvez esta conta já tenha votado. Recarregue a página para conferir."
+      :"Não foi possível enviar o voto: "+error.message,"error");
+    updateForm();
+  }
+});
+
+buildForm();
+updateForm();
+if(!appConfigured) {
+  $("loginBtn").disabled=true;
+  $("votingForm").hidden=true;
+  setStatus("Configuração pendente: preencha firebaseConfig no arquivo index.html seguindo o README.","error");
+} else {
+  onAuthStateChanged(auth,handleUser);
+  votesUnsubscribe=onSnapshot(collection(db,"votes"),snapshot=>{
+    renderResults(snapshot.docs.map(d=>d.data()));
+  },error=>{
+    setStatus("Não foi possível carregar a votação. Verifique as regras do Firestore: "+error.message,"error");
+  });
+}
+</script>
+</body>
+</html>

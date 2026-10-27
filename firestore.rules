@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function validScore(score) {
+      return score is int && score >= 1 && score <= 10;
+    }
+
+    function validTeam(team) {
+      return team is map
+        && team.keys().hasAll([
+          'criatividade', 'humor', 'execucao', 'apresentacao',
+          'caos', 'participacao', 'carisma'
+        ])
+        && team.keys().hasOnly([
+          'criatividade', 'humor', 'execucao', 'apresentacao',
+          'caos', 'participacao', 'carisma'
+        ])
+        && validScore(team.criatividade)
+        && validScore(team.humor)
+        && validScore(team.execucao)
+        && validScore(team.apresentacao)
+        && validScore(team.caos)
+        && validScore(team.participacao)
+        && validScore(team.carisma);
+    }
+
+    function validVote(data) {
+      return data.keys().hasAll(['uid', 'ratings', 'submittedAt'])
+        && data.keys().hasOnly(['uid', 'ratings', 'submittedAt'])
+        && data.uid == request.auth.uid
+        && data.ratings is map
+        && data.ratings.keys().hasAll([
+          'pao_da_vida', 'cronicas_do_sabor', 'gafanhotas'
+        ])
+        && data.ratings.keys().hasOnly([
+          'pao_da_vida', 'cronicas_do_sabor', 'gafanhotas'
+        ])
+        && validTeam(data.ratings.pao_da_vida)
+        && validTeam(data.ratings.cronicas_do_sabor)
+        && validTeam(data.ratings.gafanhotas)
+        && data.submittedAt is timestamp;
+    }
+
+    match /votes/{userId} {
+      // Os resultados são públicos para todos poderem acompanhar em tempo real.
+      allow read: if true;
+
+      // O ID do documento é o UID autenticado. Um documento só pode ser criado uma vez.
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && validVote(request.resource.data);
+
+      // Votos não podem ser alterados nem apagados pelos participantes.
+      allow update, delete: if false;
+    }
+  }
+}
