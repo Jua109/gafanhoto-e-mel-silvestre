@@ -62,12 +62,14 @@ header p:last-child{color:#d7d0bd}
   </section>
 
   <div class="instructions">
-    <strong>Como funciona:</strong> dê uma nota de 1 a 10 para cada um dos sete critérios em cada equipe. Para enviar, é necessário preencher todas as 21 notas. Cada conta Google pode enviar um voto, e não será possível alterá-lo depois do envio.
+    <h2>Conheça as equipes</h2> 
+    <strong>Pão da Vida:</strong> Henrique Dourado, Lucas Roberto, Davi Carrielo, David Archanjo, Daniel Archanjo, Davi Luiz, Miguel, Tiago Maurício.
+    <strong>Crônicas do Sabor:</strong> Alice Dourado, Ana Rosa, Bruna, Júlia Santos, Letícia FLores, Iasmin Porto, Rafaella Rangel.
+    <strong>Gafanhotas:</strong> Catarina, Lia, Luisa Brasiliense, Ana Cecília, Sabrina.
   </div>
 
   <section aria-labelledby="videosTitle">
     <div class="section-head">
-      <p class="eyebrow">Conheça as equipes</p>
       <h2 id="videosTitle">Vídeos da competição</h2>
       <p>Os vídeos serão disponibilizados aqui assim que estiverem prontos.</p>
     </div>
@@ -88,8 +90,7 @@ header p:last-child{color:#d7d0bd}
   </section>
 
   <div class="section-head">
-    <p class="eyebrow">Sua avaliação</p>
-    <h2>Vote nas equipes</h2>
+    <h2>Avaliação</h2>
     <p>Escolha uma nota de 1 a 10 para cada critério.</p>
   </div>
 
@@ -103,19 +104,18 @@ header p:last-child{color:#d7d0bd}
 
   <section class="panel" id="alreadyVoted" hidden>
     <strong>Seu voto já foi registrado.</strong>
-    <p class="muted">Para preservar a regra de um voto por conta, esta avaliação não pode ser alterada. Você ainda pode acompanhar a classificação abaixo.</p>
+    <p class="muted">Apenas um voto por pessoa. Você ainda pode acompanhar a classificação abaixo.</p>
   </section>
 
   <section class="summary" aria-live="polite">
     <h2>Placar ao vivo</h2>
-    <p>Os pontos de todos os participantes são somados. A pontuação máxima por voto é de 70 pontos por equipe.</p>
     <div class="results" id="results">
       <div class="result">Carregando resultados…</div>
     </div>
     <div class="ranking" id="ranking"></div>
     <p class="muted" id="voteCount" style="color:#d9d0c3;margin:15px 0 0">Carregando número de votos…</p>
   </section>
-  <p class="footnote">Gafanhoto e Mel Silvestre · Pão da Vida · Crônicas do Sabor · Gafanhotas</p>
+  <p class="footnote">Gafanhoto e Mel Silvestre · UPA 2026</p>
 </main>
 
 <script type="module">
@@ -227,7 +227,7 @@ function renderResults(votes) {
     const tied=i>0&&totals[t.id]===totals[ranking[i-1].id];
     return `<li>${t.name} — <strong>${totals[t.id]} pontos</strong>${tied?" (empate)":""}</li>`;
   }).join("")+"</ol>";
-  $("voteCount").textContent=`Total de avaliações enviadas: ${votes.length}. Cada avaliação acrescenta até 70 pontos a cada equipe.`;
+  $("voteCount").textContent=`Total de avaliações enviadas: ${votes.length}.`;
 }
 function showSignedIn(user) {
   currentUser=user;
